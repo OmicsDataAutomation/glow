@@ -10,7 +10,7 @@ import sbt.nio.Keys._
 lazy val scala212 = "2.12.8"
 lazy val scala211 = "2.11.12"
 
-lazy val spark3 = "3.0.0"
+lazy val spark3 = "3.0.1"
 lazy val spark2 = "2.4.5"
 
 lazy val sparkVersion = settingKey[String]("sparkVersion")
@@ -99,6 +99,8 @@ lazy val commonSettings = Seq(
   resolvers += "Apache Snapshots" at "https://repository.apache.org/snapshots/"
 )
 
+ThisBuild / resolvers += "Local Maven Repository" at "file:///"+Path.userHome+"/.m2/repository"
+
 lazy val functionsYml = settingKey[File]("functionsYml")
 ThisBuild / functionsYml := (ThisBuild / baseDirectory).value / "functions.yml"
 // Script to generate function definitions from YAML file
@@ -164,7 +166,8 @@ ThisBuild / coreDependencies := (providedSparkDependencies.value ++ testCoreDepe
   "io.netty" % "netty" % "3.9.9.Final",
   "io.netty" % "netty-all" % "4.1.17.Final",
   "com.github.samtools" % "htsjdk" % "2.21.2",
-  "org.yaml" % "snakeyaml" % "1.16"
+  "org.yaml" % "snakeyaml" % "1.16",
+  "org.genomicsdb" % "genomicsdb" % "1.4.0-SNAPSHOT"
 )).map(_.exclude("com.google.code.findbugs", "jsr305"))
 
 lazy val root = (project in file(".")).aggregate(core, python, hail, docs)
