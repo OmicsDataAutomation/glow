@@ -1,0 +1,33 @@
+{
+    "query_row_ranges": [
+        {
+            "range_list": [
+                {
+                    "high": 3,
+                    "low": 0
+                }
+            ]
+        }
+    ],
+    "reference_genome": "test-data/genomicsdb/chr1_10MB.fasta.gz",
+    "query_filter": "",
+    "segment_size": 40,
+    "query_column_ranges": [
+        {
+            "range_list": [
+                {
+                    "high": 1000000000,
+                    "low": 0
+                }
+            ]
+        }
+    ],
+    "workspace": "test-data/genomicsdb/ws",
+    "attributes": [
+        "DP"
+    ],
+    "vcf_header_filename": [
+        "test-data/genomicsdb/template_vcf_header.vcf"
+    ],
+    "array_name": "t0_1_2"
+}

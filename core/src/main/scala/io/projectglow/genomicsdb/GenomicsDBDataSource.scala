@@ -2,6 +2,7 @@ package io.projectglow.genomicsdb
 
 import scala.collection.JavaConverters._
 
+import htsjdk.samtools.ValidationStringency
 import htsjdk.tribble.{CloseableTribbleIterator, FeatureCodec}
 import htsjdk.tribble.readers.PositionalBufferedStream
 import htsjdk.variant.bcf2.BCF2Codec
@@ -21,10 +22,11 @@ import org.apache.spark.sql.sources.DataSourceRegister
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.util.CaseInsensitiveStringMap
 
-class GenomicsDBDataSource extends TableProvider with DataSourceRegister {
-  
-  override def shortName(): String = "genomicsdb"
+import io.projectglow.vcf.VariantContextToInternalRowConverter
 
+//class GenomicsDBDataSource extends TableProvider {
+class DefaultSource extends TableProvider {
+  
   def inferSchema(options: CaseInsensitiveStringMap): StructType = {
     // TODO make this read from the glow VCFSchema
     return GenomicsDBSchemaFactory.glowCompatSchema()
@@ -44,7 +46,7 @@ class GenomicsDBTable(schema: StructType, partitioning: Array[Transform], proper
 
   override def schema(): StructType = schema
 
-  override def name(): String = "genomicsdb"
+  override def name(): String = this.getClass.toString
 
   override def newScanBuilder(options: CaseInsensitiveStringMap): ScanBuilder = new GenomicsDBScanBuilder(schema, properties, options)
 
@@ -61,6 +63,7 @@ class GenomicsDBScan(schema: StructType, properties: java.util.Map[String,String
   options: CaseInsensitiveStringMap) extends Scan with Batch {
 
     private val batch: GenomicsDBBatch = new GenomicsDBBatch(schema, properties, options)
+    
     private val input:GenomicsDBInput[GenomicsDBInputPartition] = batch.getInput()
   
     override def readSchema(): StructType = schema
@@ -99,13 +102,21 @@ class GenomicsDBPartitionReader(inputPartition: GenomicsDBInputPartition) extend
       } catch {
         case _:java.io.IOException => null;
       }
+    
+    // converter components
+    val header = fReader.getVcfHeader()
+    val requiredSchema = GenomicsDBSchemaFactory.glowCompatSchema()
+    val stringency = ValidationStringency.LENIENT
+    val converter = new VariantContextToInternalRowConverter(header, requiredSchema, stringency)
 
-    val iterator = fReader.iterator//.asInstanceOf[java.util.Ite[VariantContext]]
+    // build internal row iterator
+    val fReaderIterator = fReader.iterator
+    val iterator = fReaderIterator.iterator.asScala
 
     def next(): Boolean = iterator.hasNext
-    def get(): InternalRow = InternalRow(Seq())//{
-      //iterator
-    //}
-    def close(): Unit = iterator.close()
+    
+    def get(): InternalRow = converter.convertRow(iterator.next(), false)
+
+    def close(): Unit = fReaderIterator.close()
 
 }  

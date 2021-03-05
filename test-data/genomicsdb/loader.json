@@ -1,0 +1,26 @@
+{
+    "treat_deletions_as_intervals": true,
+    "callset_mapping_file": "test-data/genomicsdb/callset_t0_1_2.json",
+    "compress_tiledb_array": true,
+    "produce_tiledb_array": true,
+    "produce_combined_vcf": true,
+    "reference_genome": "test-data/genomicsdb/chr1_10MB.fasta.gz",
+    "size_per_column_partition": 700,
+    "delete_and_create_tiledb_array": true,
+    "num_parallel_vcf_files": 1,
+    "discard_vcf_index": true,
+    "num_cells_per_tile": 3,
+    "offload_vcf_output_processing": false,
+    "column_partitions": [
+        {
+            "begin": 0,
+            "array_name": "t0_1_2",
+            "workspace": "test-data/genomicsdb/ws"
+        }
+    ],
+    "vcf_header_filename": "test-data/genomicsdb/template_vcf_header.vcf",
+    "row_based_partitioning": false,
+    "segment_size": 40,
+    "do_ping_pong_buffering": false,
+    "vid_mapping_file": "test-data/genomicsdb/vid.json"
+}
