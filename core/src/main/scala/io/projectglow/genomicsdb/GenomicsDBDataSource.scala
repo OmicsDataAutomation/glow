@@ -11,7 +11,7 @@ import htsjdk.variant.variantcontext.VariantContext
 import org.genomicsdb.model.GenomicsDBExportConfiguration
 import org.genomicsdb.reader.GenomicsDBFeatureReader
 import org.genomicsdb.spark.{GenomicsDBConfiguration, GenomicsDBInput, GenomicsDBVidSchema, GenomicsDBSchemaFactory}
-import org.genomicsdb.spark.sources.{GenomicsDBBatch, GenomicsDBInputPartition}
+import org.genomicsdb.spark.sources.{GenomicsDBBatch, GenomicsDBInputPartition, VariantContextToInternalRow}
 
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.connector.catalog.{SupportsRead, Table, TableCapability, TableProvider}
@@ -22,6 +22,7 @@ import org.apache.spark.sql.sources.DataSourceRegister
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.util.CaseInsensitiveStringMap
 
+import io.projectglow.common.VCFRow
 import io.projectglow.vcf.VariantContextToInternalRowConverter
 
 //class GenomicsDBDataSource extends TableProvider {
@@ -29,7 +30,7 @@ class DefaultSource extends TableProvider {
   
   def inferSchema(options: CaseInsensitiveStringMap): StructType = {
     // TODO make this read from the glow VCFSchema
-    return GenomicsDBSchemaFactory.glowCompatSchema()
+    return VCFRow.schema
   }  
 
   override def getTable(schema: StructType, partitioning: Array[Transform], properties: java.util.Map[String, String]): Table = {
@@ -105,7 +106,7 @@ class GenomicsDBPartitionReader(inputPartition: GenomicsDBInputPartition) extend
     
     // converter components
     val header = fReader.getVcfHeader()
-    val requiredSchema = GenomicsDBSchemaFactory.glowCompatSchema()
+    val requiredSchema = VCFRow.schema
     val stringency = ValidationStringency.LENIENT
     val converter = new VariantContextToInternalRowConverter(header, requiredSchema, stringency)
 

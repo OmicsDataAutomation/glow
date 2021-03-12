@@ -20,7 +20,7 @@ import java.nio.file.Files
 import java.util.Base64
 
 import htsjdk.variant.vcf.VCFConstants
-import org.genomicsdb.model.GenomicsDBExportConfiguration
+import org.genomicsdb.model.{Coordinates, GenomicsDBExportConfiguration}
 import org.genomicsdb.spark.GenomicsDBSchemaFactory
 import com.googlecode.protobuf.format.JsonFormat
 
@@ -50,12 +50,47 @@ class GenomicsDBDataSourceSuite extends GlowBaseTest {
   lazy val stringInfoFieldsVcf = s"$testDataHome/test.chr17.vcf"
   lazy val sess = spark
 
-  val builder = GenomicsDBExportConfiguration.ExportConfiguration.newBuilder();
-  val jsonString = scala.io.Source.fromFile(testQueryJson).mkString
-  JsonFormat.merge(jsonString, builder);
+  // TODO move all this to a utility
+  val baseBuilder = GenomicsDBExportConfiguration.ExportConfiguration.newBuilder()
+    .setWorkspace("test-data/genomicsdb/ws")
+    .setArrayName("t0_1_2")
+    .setReferenceGenome("test-data/genomicsdb/chr1_10MB.fasta.gz")
+    .addAttributes("DP")
+    .setVcfHeaderFilename("test-data/genomicsdb/template_vcf_header.vcf")
+    .setSegmentSize(40)
+
+  // column intervals
+  val ci1 = Coordinates.ContigInterval.newBuilder()
+    .setContig("1").setBegin(0).setEnd(249250621)
+  
+  // interval list 
+  val tileInterval = Coordinates.TileDBColumnInterval.newBuilder()
+    .setBegin(0)
+    .setEnd(1000000000)
+
+  val colIntervalBase = Coordinates.GenomicsDBColumnInterval.newBuilder()
+    .setTiledbColumnInterval(tileInterval)
+
+  val colInterval = Coordinates.GenomicsDBColumnOrInterval.newBuilder()
+    .setColumnInterval(colIntervalBase)
+
+  val colRanges = GenomicsDBExportConfiguration.GenomicsDBColumnOrIntervalList.newBuilder()
+    .addColumnOrIntervalList(colInterval)
+
+  // row ranges
+  val rows = GenomicsDBExportConfiguration.RowRange.newBuilder()
+    .setLow(0).setHigh(3)
+
+  val rowLists = GenomicsDBExportConfiguration.RowRangeList.newBuilder()
+    .addRangeList(rows)
+
+  val builder = baseBuilder.addQueryColumnRanges(colRanges)
+    //.addQueryContigIntervals(ci1)
+    .addQueryRowRanges(rowLists)
+  
+  println(JsonFormat.printToString(builder.build()))
   val pb = builder.build().toByteArray();
   val pbQueryFile = Base64.getEncoder().encodeToString(pb);
-  println(pbQueryFile)
 
   override def sparkConf: SparkConf = {
     super
@@ -77,30 +112,12 @@ class GenomicsDBDataSourceSuite extends GlowBaseTest {
     //assert(df.where(expr("size(filter(genotypes, g -> g.sampleId is null)) > 0")).count() == 0)
   }
 
-  /*test("parse VCF") {
-    val datasource = spark.read.format(sourceName).load(testVcf)
-    datasource.count()
+  test("native genomicsdb"){
+    val df = spark.read.format("org.genomicsdb.spark.sources.GenomicsDBSource")
+      .option("genomicsdb.input.loaderjsonfile", testLoaderJson)
+      .option("genomicsdb.input.queryprotobuf", pbQueryFile)
+      .load()
+    df.show(false)
   }
 
-  test("no sample ids") {
-    val schema = spark
-      .read
-      .format(sourceName)
-      .option("includeSampleIds", false)
-      .load(testVcf)
-      .withColumn("g", expr("genotypes[0]"))
-      .selectExpr("g.*")
-      .schema
-
-    assert(!schema.exists(_.name == "sampleId"))
-  }
-
-  test("with sample ids") {
-    val datasource = spark
-      .read
-      .format(sourceName)
-      .load(testVcf)
-    val size = datasource.count()
-    assert(datasource.where("genotypes[0].sampleId = 'NA12878'").count() == size)
-  }**/
 }
