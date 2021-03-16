@@ -165,9 +165,12 @@ ThisBuild / coreDependencies := (providedSparkDependencies.value ++ testCoreDepe
   "org.apache.hadoop" % "hadoop-client" % "2.7.3",
   "io.netty" % "netty" % "3.9.9.Final",
   "io.netty" % "netty-all" % "4.1.17.Final",
-  "com.github.samtools" % "htsjdk" % "2.21.2",
+  "com.github.samtools" % "htsjdk" % "2.23.0",
   "org.yaml" % "snakeyaml" % "1.16",
-  "org.genomicsdb" % "genomicsdb" % "1.4.0-SNAPSHOT"
+  "org.genomicsdb" % "genomicsdb" % "1.4.0-SNAPSHOT",
+  //"com.oda.gdbspark" % "gdb-spark-api" % "2.0.5-SNAPSHOT"
+  "com.google.protobuf" % "protobuf-java" % "3.0.2",
+  "com.googlecode.protobuf-java-format" % "protobuf-java-format" % "1.2"
 )).map(_.exclude("com.google.code.findbugs", "jsr305"))
 
 lazy val root = (project in file(".")).aggregate(core, python, hail, docs)

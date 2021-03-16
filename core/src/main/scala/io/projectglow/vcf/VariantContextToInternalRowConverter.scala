@@ -86,7 +86,7 @@ class VariantContextToInternalRowConverter(
               val alleleMap = buildAlleleMap(vc)
               val output = new Array[Any](vc.getGenotypes.size())
               var j = 0
-              while (j < output.length) {
+              while (j < output.length) {             
                 output(j) = gConverter((alleleMap, vc.getGenotype(j)))
                 j += 1
               }
@@ -373,7 +373,7 @@ class VariantContextToInternalRowConverter(
         var alleleIdx = 0
         while (alleleIdx < numAlleles) {
           val allele = alleleList.get(alleleIdx)
-          val call = alleleMap.getOrDefault(allele, -1)
+          val call = alleleMap.getOrDefault(allele, 0)//-1)
           callArray(alleleIdx) = call
           alleleIdx += 1
         }
