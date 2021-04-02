@@ -89,15 +89,19 @@ lazy val commonSettings = Seq(
   test in assembly := {},
   assemblyMergeStrategy in assembly := {
     // Assembly jar is not executable
-    case p if p.toLowerCase.contains("manifest.mf") =>
+    case p if p.toLowerCase.contains("manifest.mf") || p.toLowerCase.contains("meta-inf") =>
       MergeStrategy.discard
     case _ =>
       // Be permissive for other files
       MergeStrategy.first
   },
+  assemblyShadeRules in assembly := Seq(
+    ShadeRule.rename("com.google.protobuf.**" -> "protobufv3_0_2.@1").inAll
+  ),
   scalacOptions += "-target:jvm-1.8",
   resolvers += "Apache Snapshots" at "https://repository.apache.org/snapshots/"
 )
+
 
 ThisBuild / resolvers += "Local Maven Repository" at "file:///"+Path.userHome+"/.m2/repository"
 
@@ -167,11 +171,16 @@ ThisBuild / coreDependencies := (providedSparkDependencies.value ++ testCoreDepe
   "io.netty" % "netty-all" % "4.1.17.Final",
   "com.github.samtools" % "htsjdk" % "2.23.0",
   "org.yaml" % "snakeyaml" % "1.16",
-  "org.genomicsdb" % "genomicsdb" % "1.4.0-SNAPSHOT",
-  //"com.oda.gdbspark" % "gdb-spark-api" % "2.0.5-SNAPSHOT"
-  "com.google.protobuf" % "protobuf-java" % "3.0.2",
-  "com.googlecode.protobuf-java-format" % "protobuf-java-format" % "1.2"
 )).map(_.exclude("com.google.code.findbugs", "jsr305"))
+
+ThisBuild / coreDependencies ++=  Seq(
+  "org.genomicsdb" % "genomicsdb" % "1.4.0-SNAPSHOT" excludeAll(
+    ExclusionRule(organization = "com.github.samtools"),
+    ExclusionRule(organization = "org.apache.spark"),
+    ExclusionRule(organization = "org.apache.logging.log4j"),
+    ExclusionRule(organization = "org.json4s"),
+  )
+)
 
 lazy val root = (project in file(".")).aggregate(core, python, hail, docs)
 
