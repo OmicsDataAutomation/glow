@@ -88,6 +88,7 @@ lazy val commonSettings = Seq(
   test in Test := ((test in Test) dependsOn (headerCheck in Test)).value,
   test in assembly := {},
   assemblyMergeStrategy in assembly := {
+    case "META-INF/services/org.apache.spark.sql.sources.DataSourceRegister" => MergeStrategy.concat
     // Assembly jar is not executable
     case p if p.toLowerCase.contains("manifest.mf") || p.toLowerCase.contains("meta-inf") =>
       MergeStrategy.discard
